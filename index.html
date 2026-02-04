@@ -30,17 +30,21 @@
     }
 
     *{box-sizing:border-box}
+    
+    html, body{
+    height:100%;
+    margin:0;
+    }
+    
     body{
-      margin:0;
-      font-family:var(--font);
-      color:var(--text);
-      background:
-        radial-gradient(1200px 700px at 10% 0%, rgba(66,214,209,.20), transparent 60%),
-        radial-gradient(900px 500px at 90% 10%, rgba(26,128,125,.22), transparent 55%),
-        var(--bg);
-      display:flex;
-      justify-content:center;
-      padding:18px;
+    font-family:var(--font);
+    color:var(--text);
+    background:
+    radial-gradient(1200px 700px at 10% 0%, rgba(66,214,209,.20), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(26,128,125,.22), transparent 55%),
+    var(--bg);
+    padding:0;
+    display:block;
     }
 
     .widget{
