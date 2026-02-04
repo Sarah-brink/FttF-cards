@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Drivers Deck</title>
+
+  <!-- Open Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      /* Brand palette */
+      --navy:#334267;
+      --teal:#1A807D;
+      --cyan:#42D6D1;
+      --offwhite:#EFEFEF;
+
+      /* Derived UI tokens */
+      --bg: var(--navy);
+      --panel: rgba(51,66,103,.55);
+      --text: var(--offwhite);
+      --muted: rgba(239,239,239,.75);
+      --border: rgba(239,239,239,.18);
+      --shadow: 0 14px 44px rgba(0,0,0,.40);
+      --radius: 14px;
+      --font: "Open Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% 0%, rgba(66,214,209,.20), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(26,128,125,.22), transparent 55%),
+        var(--bg);
+      display:flex;
+      justify-content:center;
+      padding:18px;
+    }
+
+    .widget{
+      width:min(1180px, 100%);
+      height:720px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background: rgba(51,66,103,.35);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    /* Always-on top bar: reset */
+    .topbar{
+      height:54px;
+      padding:12px 16px;
+      border-bottom:1px solid var(--border);
+      background: rgba(51,66,103,.45);
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(51,66,103,.55);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:13px;
+      transition:.15s transform ease, .15s border-color ease, .15s background ease;
+    }
+    button:hover{
+      transform:translateY(-1px);
+      border-color: rgba(66,214,209,.70);
+    }
+    button.primary{
+      background: rgba(26,128,125,.28);
+      border-color: rgba(66,214,209,.75);
+    }
+    button.danger{
+      background: rgba(239,239,239,.08);
+      border-color: rgba(239,239,239,.28);
+    }
+    button:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+    button.mini{
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+    }
+
+    .content{
+      height: calc(720px - 54px);
+      padding:14px 16px 16px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .pill{
+      padding:8px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background: rgba(51,66,103,.55);
+      font-size:13px;
+      color: var(--text);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      opacity:0;
+      transform: translateY(-2px);
+      transition: .15s opacity ease, .15s transform ease;
+      white-space:nowrap;
+    }
+    .pill.show{ opacity:1; transform: translateY(0); }
+
+    .panel{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      background: var(--panel);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      flex: 1 1 auto;
+      min-height: 0;
+      backdrop-filter: blur(6px);
+    }
+    .panel h2{ margin:0 0 8px; font-size:16px; }
+    .panel p{ margin:0; line-height:1.35; }
+    .hint{ margin-top:8px; color:var(--muted); font-size:13px; }
+
+    .panelBody{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .bottomBar{
+      margin-top:auto;
+      padding-top:12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .bottomBar .left{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .bottomBar .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .rightGroup{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    /* Stage 1 carousel */
+    .carouselWrap{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background: rgba(51,66,103,.30);
+      padding:12px;
+      flex:1 1 auto;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+    .carouselControls{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .countText{ color:var(--muted); font-size:13px; }
+
+    .carousel{
+      flex:1 1 auto;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-snap-type:x mandatory;
+      display:flex;
+      gap:12px;
+      padding-bottom:6px;
+      -webkit-overflow-scrolling:touch;
+      min-height:0;
+    }
+    .carousel::-webkit-scrollbar{height:10px}
+    .carousel::-webkit-scrollbar-thumb{background: rgba(239,239,239,.22); border-radius:999px}
+
+    .cardTile{
+      scroll-snap-align:start;
+      flex: 0 0 420px;
+      height: 360px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      background: rgba(51,66,103,.40);
+      box-shadow: 0 8px 22px rgba(0,0,0,.28);
+      position:relative;
+      cursor:pointer;
+      transition:.15s transform ease, .15s border-color ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
+    }
+    @media (max-width: 980px){ .cardTile{ flex-basis: 360px; } }
+    @media (max-width: 760px){ .cardTile{ flex-basis: 300px; } }
+
+    .cardTile:hover{ transform: translateY(-2px); border-color: rgba(66,214,209,.65); }
+    .cardTile.selected{
+      border-color: rgba(66,214,209,.95);
+      outline: 2px solid rgba(66,214,209,.22);
+    }
+
+    .cardTile img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      background: rgba(0,0,0,.10);
+      border-radius:12px;
+    }
+
+    .tileControls{
+      position:absolute;
+      right:10px;
+      bottom:10px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .check{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(51,66,103,.62);
+      font-size:13px;
+      user-select:none;
+    }
+    .check input{
+      width:16px;
+      height:16px;
+      accent-color: var(--cyan);
+      cursor:pointer;
+    }
+
+    /* Review (steps 2–4) */
+    .review{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background: rgba(51,66,103,.30);
+      padding:12px;
+      flex:1 1 auto;
+      overflow:hidden;
+      display:flex;
+      gap:12px;
+      flex-direction:column;
+      min-height:0;
+    }
+    .reviewCard{
+      flex: 1 1 auto;
+      min-height: 0;
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      background: rgba(51,66,103,.40);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .reviewCard img{
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display:block;
+      background: rgba(0,0,0,.10);
+    }
+
+    .hidden{display:none !important;}
+  </style>
+</head>
+
+<body>
+  <div class="widget" role="application" aria-label="Drivers deck widget">
+    <div class="topbar">
+      <button class="danger" id="btnReset">Reset</button>
+    </div>
+
+    <div class="content">
+      <!-- STEP 1: Intro -->
+      <div class="panel" id="s1_intro">
+        <div class="panelBody">
+          <div>
+            <h2>Step 1 — Select the Drivers</h2>
+            <p>
+              Read through the whole deck then choose <strong>2–3</strong> cards that stand out to you or are most relevant to your context.
+              These could relate to current challenges you're facing or future opportunities you’re exploring.
+            </p>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left"></div>
+          <div class="right">
+            <button class="primary" id="s1_start">Start selecting</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 1: Action -->
+      <div class="panel hidden" id="s1_action">
+        <div class="panelBody">
+          <div>
+            <h2>Step 1 — Select the Drivers</h2>
+            <p>Select <strong>2–3</strong> cards. Scroll sideways to browse the deck.</p>
+          </div>
+
+          <div class="carouselWrap">
+            <div class="carouselControls">
+              <div class="countText">Browse the deck, flip cards if useful, then tick 2–3 cards.</div>
+              <div class="right">
+                <button id="carouselPrev" type="button">◀</button>
+                <button id="carouselNext" type="button">▶</button>
+              </div>
+            </div>
+
+            <div class="carousel" id="carousel"></div>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="s1_back">Back</button>
+          </div>
+
+          <div class="rightGroup">
+            <div class="pill show" id="pillSelected">Selected: 0 (choose 2–3)</div>
+            <button class="primary" id="s1_continue" disabled>Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Intro -->
+      <div class="panel hidden" id="s2_intro">
+        <div class="panelBody">
+          <div>
+            <h2>Step 2 — Explore Each Driver</h2>
+            <p>Review your selected cards one by one and consider the forces at play.</p>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="s2_back">Back</button>
+          </div>
+          <div class="right">
+            <button class="primary" id="s2_start">Start</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Review (no flip, no card count) -->
+      <div class="panel hidden" id="s2_action">
+        <div class="panelBody">
+          <div>
+            <h2>Step 2 — Explore Each Driver</h2>
+          </div>
+
+          <div class="review">
+            <div class="reviewCard">
+              <img id="s2_img" alt="Selected card" />
+            </div>
+            <div class="hint"><strong>Prompt:</strong> Consider the forces at play. What’s shifting, accelerating, or becoming unstable?</div>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="s2_prev">Prev</button>
+          </div>
+          <div class="right">
+            <button id="s2_next">Next</button>
+            <button class="primary" id="s2_continue" disabled>Continue to Step 3</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Intro -->
+      <div class="panel hidden" id="s3_intro">
+        <div class="panelBody">
+          <div>
+            <h2>Step 3 — Reflect + Explore Intersections</h2>
+            <p>Review each selected card one by one. Then discuss how the drivers interact.</p>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="s3_back">Back</button>
+          </div>
+          <div class="right">
+            <button class="primary" id="s3_start">Start</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Review (no flip, no card count) -->
+      <div class="panel hidden" id="s3_action">
+        <div class="panelBody">
+          <div>
+            <h2>Step 3 — Reflect + Explore Intersections</h2>
+          </div>
+
+          <div class="review">
+            <div class="reviewCard">
+              <img id="s3_img" alt="Selected card" />
+            </div>
+            <div class="hint" id="s3_prompt">
+              <strong>Prompt:</strong> Reflect on the question posed and how this driver might impact your city, work, or sector.
+            </div>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="s3_prev">Prev</button>
+          </div>
+          <div class="right">
+            <button id="s3_next">Next</button>
+            <button class="primary" id="s3_continue" disabled>Continue to Step 4</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Intro -->
+      <div class="panel hidden" id="s4_intro">
+        <div class="panelBody">
+          <div>
+            <h2>Step 4 — Identify Leverage Points</h2>
+            <p>Review each card one by one and identify leverage points and signals to track.</p>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="s4_back">Back</button>
+          </div>
+          <div class="right">
+            <button class="primary" id="s4_start">Start</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Review (no flip, no card count) -->
+      <div class="panel hidden" id="s4_action">
+        <div class="panelBody">
+          <div>
+            <h2>Step 4 — Identify Leverage Points</h2>
+          </div>
+
+          <div class="review">
+            <div class="reviewCard">
+              <img id="s4_img" alt="Selected card" />
+            </div>
+            <div class="hint">
+              <strong>Prompt:</strong> Where could interventions influence outcomes? What signals or trends would you track to monitor evolving impact?
+            </div>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="s4_prev">Prev</button>
+          </div>
+          <div class="right">
+            <button id="s4_next">Next</button>
+            <button class="primary" id="finish" disabled>Finish</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DONE -->
+      <div class="panel hidden" id="done">
+        <div class="panelBody">
+          <div>
+            <h2>Done</h2>
+            <p>You’ve worked through your selected drivers. You can reset to start again.</p>
+          </div>
+        </div>
+
+        <div class="bottomBar">
+          <div class="left">
+            <button id="done_back">Back to start</button>
+          </div>
+          <div class="right">
+            <button class="danger" id="done_reset">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CARD_FOLDER = "cards";
+
+    const DECK = Array.from({length: 20}).map((_, i) => {
+      const frontIndex = i * 2 + 1;
+      const backIndex  = i * 2 + 2;
+      return {
+        id: `D${String(i+1).padStart(2,'0')}`,
+        frontSrc: `${CARD_FOLDER}/card_${String(frontIndex).padStart(2,'0')}.png`,
+        backSrc:  `${CARD_FOLDER}/card_${String(backIndex).padStart(2,'0')}.png`,
+      };
+    });
+
+    const state = {
+      selected: new Set(),
+      tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
+      reviewIndex: 0
+    };
+
+    const $ = (s) => document.querySelector(s);
+    const show = (id) => document.getElementById(id).classList.remove("hidden");
+    const hide = (id) => document.getElementById(id).classList.add("hidden");
+    const selectedDrivers = () => DECK.filter(d => state.selected.has(d.id));
+
+    function setSelectedPill(){
+      const n = state.selected.size;
+      $("#pillSelected").textContent = `Selected: ${n} (choose 2–3)`;
+    }
+
+    function showOnly(panelId){
+      const ids = ["s1_intro","s1_action","s2_intro","s2_action","s3_intro","s3_action","s4_intro","s4_action","done"];
+      ids.forEach(id => (id === panelId ? show(id) : hide(id)));
+    }
+
+    function clampSelection(){
+      const n = state.selected.size;
+      document.querySelectorAll('input[data-card]').forEach(inp => {
+        const id = inp.getAttribute("data-card");
+        if(state.selected.has(id)){
+          inp.disabled = false;
+          inp.checked = true;
+        }else{
+          inp.checked = false;
+          inp.disabled = (n >= 3);
+        }
+      });
+    }
+
+    function updateStep1Continue(){
+      const n = state.selected.size;
+      $("#s1_continue").disabled = !(n >= 2 && n <= 3);
+      setSelectedPill();
+      clampSelection();
+    }
+
+    function renderCarousel(){
+      const el = $("#carousel");
+      el.innerHTML = "";
+
+      DECK.forEach(d => {
+        const tile = document.createElement("div");
+        tile.className = "cardTile" + (state.selected.has(d.id) ? " selected" : "");
+
+        const img = document.createElement("img");
+        const face = state.tileFace[d.id] || "front";
+        img.src = (face === "front") ? d.frontSrc : d.backSrc;
+        img.alt = "Driver card";
+
+        const controls = document.createElement("div");
+        controls.className = "tileControls";
+
+        const flipBtn = document.createElement("button");
+        flipBtn.className = "mini";
+        flipBtn.type = "button";
+        flipBtn.textContent = "Flip";
+        flipBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          state.tileFace[d.id] = (state.tileFace[d.id] === "front") ? "back" : "front";
+          img.src = (state.tileFace[d.id] === "front") ? d.frontSrc : d.backSrc;
+        });
+
+        const overlay = document.createElement("label");
+        overlay.className = "check";
+        overlay.innerHTML = `
+          <input type="checkbox" data-card="${d.id}" aria-label="Select this card" />
+          Select
+        `;
+
+        controls.appendChild(flipBtn);
+        controls.appendChild(overlay);
+
+        tile.appendChild(img);
+        tile.appendChild(controls);
+
+        tile.addEventListener("click", (e) => {
+          if(e.target && (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON")) return;
+          const cb = tile.querySelector("input[data-card]");
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event("change", {bubbles:true}));
+        });
+
+        el.appendChild(tile);
+      });
+
+      el.querySelectorAll("input[data-card]").forEach(inp => {
+        inp.addEventListener("change", (e) => {
+          const id = e.target.getAttribute("data-card");
+          if(e.target.checked) state.selected.add(id);
+          else state.selected.delete(id);
+
+          const tile = e.target.closest(".cardTile");
+          if(tile) tile.classList.toggle("selected", state.selected.has(id));
+
+          updateStep1Continue();
+        });
+      });
+
+      updateStep1Continue();
+    }
+
+    function carouselScrollBy(amount){
+      $("#carousel").scrollBy({ left: amount, top: 0, behavior: "smooth" });
+    }
+
+    function reviewLoad(step){
+      const list = selectedDrivers();
+      if(list.length === 0){
+        showOnly("s1_intro");
+        return;
+      }
+
+      state.reviewIndex = Math.max(0, Math.min(state.reviewIndex, list.length - 1));
+      const d = list[state.reviewIndex];
+
+      if(step === 2){
+        $("#s2_img").src = d.backSrc;
+        $("#s2_prev").disabled = state.reviewIndex === 0;
+        $("#s2_next").disabled = state.reviewIndex === list.length - 1;
+        $("#s2_continue").disabled = state.reviewIndex !== list.length - 1;
+      }
+
+      if(step === 3){
+        $("#s3_img").src = d.backSrc;
+        $("#s3_prev").disabled = state.reviewIndex === 0;
+        $("#s3_next").disabled = state.reviewIndex === list.length - 1;
+
+        if(state.reviewIndex === list.length - 1){
+          $("#s3_prompt").innerHTML =
+            "<strong>Intersections prompt:</strong> Now think about how these drivers interact. Do they amplify one another, create new tensions, or open up opportunities for innovation and adaptation?";
+          $("#s3_continue").disabled = false;
+        }else{
+          $("#s3_prompt").innerHTML =
+            "<strong>Prompt:</strong> Reflect on the question posed and how this driver might impact your city, work, or sector.";
+          $("#s3_continue").disabled = true;
+        }
+      }
+
+      if(step === 4){
+        $("#s4_img").src = d.backSrc;
+        $("#s4_prev").disabled = state.reviewIndex === 0;
+        $("#s4_next").disabled = state.reviewIndex === list.length - 1;
+        $("#finish").disabled = state.reviewIndex !== list.length - 1;
+      }
+    }
+
+    function reviewPrev(step){ state.reviewIndex -= 1; reviewLoad(step); }
+    function reviewNext(step){ state.reviewIndex += 1; reviewLoad(step); }
+
+    function resetAll(){
+      state.selected = new Set();
+      state.tileFace = Object.fromEntries(DECK.map(d => [d.id, "front"]));
+      state.reviewIndex = 0;
+      setSelectedPill();
+      showOnly("s1_intro");
+    }
+
+    $("#btnReset").addEventListener("click", resetAll);
+
+    // Step 1
+    $("#s1_start").addEventListener("click", () => {
+      showOnly("s1_action");
+      setSelectedPill();
+      renderCarousel();
+    });
+    $("#s1_back").addEventListener("click", () => showOnly("s1_intro"));
+    $("#s1_continue").addEventListener("click", () => showOnly("s2_intro"));
+
+    $("#carouselPrev").addEventListener("click", () => carouselScrollBy(-460));
+    $("#carouselNext").addEventListener("click", () => carouselScrollBy(460));
+
+    // Step 2
+    $("#s2_back").addEventListener("click", () => {
+      showOnly("s1_action");
+      setSelectedPill();
+      renderCarousel();
+    });
+    $("#s2_start").addEventListener("click", () => {
+      state.reviewIndex = 0;
+      showOnly("s2_action");
+      reviewLoad(2);
+    });
+    $("#s2_prev").addEventListener("click", () => reviewPrev(2));
+    $("#s2_next").addEventListener("click", () => reviewNext(2));
+    $("#s2_continue").addEventListener("click", () => showOnly("s3_intro"));
+
+    // Step 3
+    $("#s3_back").addEventListener("click", () => showOnly("s2_intro"));
+    $("#s3_start").addEventListener("click", () => {
+      state.reviewIndex = 0;
+      showOnly("s3_action");
+      reviewLoad(3);
+    });
+    $("#s3_prev").addEventListener("click", () => reviewPrev(3));
+    $("#s3_next").addEventListener("click", () => reviewNext(3));
+    $("#s3_continue").addEventListener("click", () => showOnly("s4_intro"));
+
+    // Step 4
+    $("#s4_back").addEventListener("click", () => showOnly("s3_intro"));
+    $("#s4_start").addEventListener("click", () => {
+      state.reviewIndex = 0;
+      showOnly("s4_action");
+      reviewLoad(4);
+    });
+    $("#s4_prev").addEventListener("click", () => reviewPrev(4));
+    $("#s4_next").addEventListener("click", () => reviewNext(4));
+    $("#finish").addEventListener("click", () => showOnly("done"));
+
+    // Done
+    $("#done_back").addEventListener("click", () => showOnly("s1_intro"));
+    $("#done_reset").addEventListener("click", resetAll);
+
+    // Init
+    setSelectedPill();
+    showOnly("s1_intro");
+  </script>
+</body>
+</html>
