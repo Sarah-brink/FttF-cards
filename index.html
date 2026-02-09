@@ -476,7 +476,7 @@
         <div class="panelBody">
           <div>
             <h2>Step 4 — Identify Leverage Points</h2>
-            <p class="hint" style="margin:0;">Review your chosen 2–3 drivers together. (Layout matches Step 1.)</p>
+            <p class="hint" style="margin:0;">Review your chosen 2–3 drivers together.</p>
           </div>
 
           <!-- Reuse the Step 1 carousel layout but only for selected cards -->
@@ -689,26 +689,45 @@
   function reviewNext(step){ state.reviewIndex += 1; reviewLoad(step); }
 
   /* ✅ Step 4: show selected cards in the Step 1 tile layout */
-  function renderStep4SelectedCarousel(){
-    const el = $("#s4_carousel");
-    if(!el) return;
+  // Track which face is showing in Step 4
+state.step4Face = state.step4Face || Object.fromEntries(DECK.map(d => [d.id, "back"]));
 
-    el.innerHTML = "";
-    const list = selectedDrivers();
+function renderStep4SelectedCarousel(){
+  const el = $("#s4_carousel");
+  el.innerHTML = "";
 
-    list.forEach(d => {
-      const tile = document.createElement("div");
-      tile.className = "cardTile selected";
-      tile.style.cursor = "default";
+  const list = selectedDrivers();
 
-      const img = document.createElement("img");
-      img.src = d.backSrc;     // consistent with steps 2–4
-      img.alt = "Selected driver card";
+  list.forEach(d => {
+    const tile = document.createElement("div");
+    tile.className = "cardTile selected";
+    tile.style.cursor = "default";
 
-      tile.appendChild(img);
-      el.appendChild(tile);
+    const img = document.createElement("img");
+    img.alt = "Selected driver card";
+    img.src = (state.step4Face[d.id] === "front") ? d.frontSrc : d.backSrc;
+
+    // Controls (Flip only)
+    const controls = document.createElement("div");
+    controls.className = "tileControls";
+
+    const flipBtn = document.createElement("button");
+    flipBtn.className = "mini";
+    flipBtn.type = "button";
+    flipBtn.textContent = "Flip";
+    flipBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.step4Face[d.id] = (state.step4Face[d.id] === "front") ? "back" : "front";
+      img.src = (state.step4Face[d.id] === "front") ? d.frontSrc : d.backSrc;
     });
-  }
+
+    controls.appendChild(flipBtn);
+    tile.appendChild(img);
+    tile.appendChild(controls);
+
+    el.appendChild(tile);
+  });
+}
 
   function resetAll(){
     state.selected = new Set();
