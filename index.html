@@ -538,11 +538,11 @@
   });
 
   const state = {
-    selected: new Set(),
-    tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
-    reviewIndex: 0
-    state.step4Face = Object.fromEntries(DECK.map(d => [d.id, "back"]));
-  };
+  selected: new Set(),
+  tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
+  reviewIndex: 0,
+  step4Face: Object.fromEntries(DECK.map(d => [d.id, "back"]))  // Step 4 flip state
+};
 
   const $ = (s) => document.querySelector(s);
   const show = (id) => document.getElementById(id).classList.remove("hidden");
@@ -688,11 +688,7 @@
 
   function reviewPrev(step){ state.reviewIndex -= 1; reviewLoad(step); }
   function reviewNext(step){ state.reviewIndex += 1; reviewLoad(step); }
-
-  /* ✅ Step 4: show selected cards in the Step 1 tile layout */
-  // Track which face is showing in Step 4
-state.step4Face = state.step4Face || Object.fromEntries(DECK.map(d => [d.id, "back"]));
-
+    
 function renderStep4SelectedCarousel(){
   const el = $("#s4_carousel");
   el.innerHTML = "";
