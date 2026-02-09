@@ -525,226 +525,263 @@
   </div>
 
   <script>
-    const CARD_FOLDER = "cards";
+  const CARD_FOLDER = "cards";
 
-    const DECK = Array.from({length: 20}).map((_, i) => {
-      const frontIndex = i * 2 + 1;
-      const backIndex  = i * 2 + 2;
-      return {
-        id: `D${String(i+1).padStart(2,'0')}`,
-        frontSrc: `${CARD_FOLDER}/card_${String(frontIndex).padStart(2,'0')}.png`,
-        backSrc:  `${CARD_FOLDER}/card_${String(backIndex).padStart(2,'0')}.png`,
-      };
-    });
-
-    const state = {
-      selected: new Set(),
-      tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
-      reviewIndex: 0
+  const DECK = Array.from({length: 20}).map((_, i) => {
+    const frontIndex = i * 2 + 1;
+    const backIndex  = i * 2 + 2;
+    return {
+      id: `D${String(i+1).padStart(2,'0')}`,
+      frontSrc: `${CARD_FOLDER}/card_${String(frontIndex).padStart(2,'0')}.png`,
+      backSrc:  `${CARD_FOLDER}/card_${String(backIndex).padStart(2,'0')}.png`,
     };
+  });
 
-    const $ = (s) => document.querySelector(s);
-    const show = (id) => document.getElementById(id).classList.remove("hidden");
-    const hide = (id) => document.getElementById(id).classList.add("hidden");
-    const selectedDrivers = () => DECK.filter(d => state.selected.has(d.id));
+  const state = {
+    selected: new Set(),
+    tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
+    reviewIndex: 0
+  };
 
-    function setSelectedPill(){
-      const n = state.selected.size;
-      $("#pillSelected").textContent = `Selected: ${n} (choose 2–3)`;
-    }
+  const $ = (s) => document.querySelector(s);
+  const show = (id) => document.getElementById(id).classList.remove("hidden");
+  const hide = (id) => document.getElementById(id).classList.add("hidden");
+  const selectedDrivers = () => DECK.filter(d => state.selected.has(d.id));
 
-    function showOnly(panelId){
-      const ids = ["s1_intro","s1_action","s2_intro","s2_action","s3_intro","s3_action","s4_intro","s4_action","done"];
-      ids.forEach(id => (id === panelId ? show(id) : hide(id)));
-    }
+  function setSelectedPill(){
+    const n = state.selected.size;
+    $("#pillSelected").textContent = `Selected: ${n} (choose 2–3)`;
+  }
 
-    function clampSelection(){
-      const n = state.selected.size;
-      document.querySelectorAll('input[data-card]').forEach(inp => {
-        const id = inp.getAttribute("data-card");
-        if(state.selected.has(id)){
-          inp.disabled = false;
-          inp.checked = true;
-        }else{
-          inp.checked = false;
-          inp.disabled = (n >= 3);
-        }
-      });
-    }
+  function showOnly(panelId){
+    const ids = ["s1_intro","s1_action","s2_intro","s2_action","s3_intro","s3_action","s4_intro","s4_action","done"];
+    ids.forEach(id => (id === panelId ? show(id) : hide(id)));
+  }
 
-    function updateStep1Continue(){
-      const n = state.selected.size;
-      $("#s1_continue").disabled = !(n >= 2 && n <= 3);
-      setSelectedPill();
-      clampSelection();
-    }
+  function clampSelection(){
+    const n = state.selected.size;
+    document.querySelectorAll('input[data-card]').forEach(inp => {
+      const id = inp.getAttribute("data-card");
+      if(state.selected.has(id)){
+        inp.disabled = false;
+        inp.checked = true;
+      }else{
+        inp.checked = false;
+        inp.disabled = (n >= 3);
+      }
+    });
+  }
 
-    function renderCarousel(){
-      const el = $("#carousel");
-      el.innerHTML = "";
+  function updateStep1Continue(){
+    const n = state.selected.size;
+    $("#s1_continue").disabled = !(n >= 2 && n <= 3);
+    setSelectedPill();
+    clampSelection();
+  }
 
-      DECK.forEach(d => {
-        const tile = document.createElement("div");
-        tile.className = "cardTile" + (state.selected.has(d.id) ? " selected" : "");
+  function renderCarousel(){
+    const el = $("#carousel");
+    el.innerHTML = "";
 
-        const img = document.createElement("img");
-        const face = state.tileFace[d.id] || "front";
-        img.src = (face === "front") ? d.frontSrc : d.backSrc;
-        img.alt = "Driver card";
+    DECK.forEach(d => {
+      const tile = document.createElement("div");
+      tile.className = "cardTile" + (state.selected.has(d.id) ? " selected" : "");
 
-        const controls = document.createElement("div");
-        controls.className = "tileControls";
+      const img = document.createElement("img");
+      const face = state.tileFace[d.id] || "front";
+      img.src = (face === "front") ? d.frontSrc : d.backSrc;
+      img.alt = "Driver card";
 
-        const flipBtn = document.createElement("button");
-        flipBtn.className = "mini";
-        flipBtn.type = "button";
-        flipBtn.textContent = "Flip";
-        flipBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          state.tileFace[d.id] = (state.tileFace[d.id] === "front") ? "back" : "front";
-          img.src = (state.tileFace[d.id] === "front") ? d.frontSrc : d.backSrc;
-        });
+      const controls = document.createElement("div");
+      controls.className = "tileControls";
 
-        const overlay = document.createElement("label");
-        overlay.className = "check";
-        overlay.innerHTML = `
-          <input type="checkbox" data-card="${d.id}" aria-label="Select this card" />
-          Select
-        `;
-
-        controls.appendChild(flipBtn);
-        controls.appendChild(overlay);
-
-        tile.appendChild(img);
-        tile.appendChild(controls);
-
-        tile.addEventListener("click", (e) => {
-          if(e.target && (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON")) return;
-          const cb = tile.querySelector("input[data-card]");
-          cb.checked = !cb.checked;
-          cb.dispatchEvent(new Event("change", {bubbles:true}));
-        });
-
-        el.appendChild(tile);
+      const flipBtn = document.createElement("button");
+      flipBtn.className = "mini";
+      flipBtn.type = "button";
+      flipBtn.textContent = "Flip";
+      flipBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        state.tileFace[d.id] = (state.tileFace[d.id] === "front") ? "back" : "front";
+        img.src = (state.tileFace[d.id] === "front") ? d.frontSrc : d.backSrc;
       });
 
-      el.querySelectorAll("input[data-card]").forEach(inp => {
-        inp.addEventListener("change", (e) => {
-          const id = e.target.getAttribute("data-card");
-          if(e.target.checked) state.selected.add(id);
-          else state.selected.delete(id);
+      const overlay = document.createElement("label");
+      overlay.className = "check";
+      overlay.innerHTML = `
+        <input type="checkbox" data-card="${d.id}" aria-label="Select this card" />
+        Select
+      `;
 
-          const tile = e.target.closest(".cardTile");
-          if(tile) tile.classList.toggle("selected", state.selected.has(id));
+      controls.appendChild(flipBtn);
+      controls.appendChild(overlay);
 
-          updateStep1Continue();
-        });
+      tile.appendChild(img);
+      tile.appendChild(controls);
+
+      tile.addEventListener("click", (e) => {
+        if(e.target && (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON")) return;
+        const cb = tile.querySelector("input[data-card]");
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event("change", {bubbles:true}));
       });
 
-      updateStep1Continue();
-    }
+      el.appendChild(tile);
+    });
 
-    /* NEW: render Step 4 carousel with ONLY selected cards, no selection controls */
-    function renderStep4SelectedCarousel(){
-      const el = $("#s4_carousel");
-      el.innerHTML = "";
+    el.querySelectorAll("input[data-card]").forEach(inp => {
+      inp.addEventListener("change", (e) => {
+        const id = e.target.getAttribute("data-card");
+        if(e.target.checked) state.selected.add(id);
+        else state.selected.delete(id);
 
-      const list = selectedDrivers();
-      list.forEach(d => {
-        const tile = document.createElement("div");
-        tile.className = "cardTile selected";
-        tile.style.cursor = "default";
+        const tile = e.target.closest(".cardTile");
+        if(tile) tile.classList.toggle("selected", state.selected.has(id));
 
-        const img = document.createElement("img");
-        // Step 4 uses the "back" side consistently (matches steps 2–4 behaviour)
-        img.src = d.backSrc;
-        img.alt = "Selected driver card";
-
-        // No controls, no checkboxes in Step 4
-        tile.appendChild(img);
-        el.appendChild(tile);
+        updateStep1Continue();
       });
-    }
+    });
 
-    function carouselScrollBy(el, amount){
-      el.scrollBy({ left: amount, top: 0, behavior: "smooth" });
-    }
+    updateStep1Continue();
+  }
 
-    function resetAll(){
-      state.selected = new Set();
-      state.tileFace = Object.fromEntries(DECK.map(d => [d.id, "front"]));
-      state.reviewIndex = 0;
-      setSelectedPill();
+  function carouselScrollBy(el, amount){
+    el.scrollBy({ left: amount, top: 0, behavior: "smooth" });
+  }
+
+  /* ✅ Original working review flow (restored) */
+  function reviewLoad(step){
+    const list = selectedDrivers();
+    if(list.length === 0){
       showOnly("s1_intro");
+      return;
     }
 
-    $("#btnReset").addEventListener("click", resetAll);
+    state.reviewIndex = Math.max(0, Math.min(state.reviewIndex, list.length - 1));
+    const d = list[state.reviewIndex];
 
-    // Step 1
-    $("#s1_start").addEventListener("click", () => {
-      showOnly("s1_action");
-      setSelectedPill();
-      renderCarousel();
+    if(step === 2){
+      $("#s2_img").src = d.backSrc;
+      $("#s2_prev").disabled = state.reviewIndex === 0;
+      $("#s2_next").disabled = state.reviewIndex === list.length - 1;
+      $("#s2_continue").disabled = state.reviewIndex !== list.length - 1;
+    }
+
+    if(step === 3){
+      $("#s3_img").src = d.backSrc;
+      $("#s3_prev").disabled = state.reviewIndex === 0;
+      $("#s3_next").disabled = state.reviewIndex === list.length - 1;
+
+      if(state.reviewIndex === list.length - 1){
+        $("#s3_prompt").innerHTML =
+          "<strong>Intersections prompt:</strong> Now think about how these drivers interact. Do they amplify one another, create new tensions, or open up opportunities for innovation and adaptation?";
+        $("#s3_continue").disabled = false;
+      }else{
+        $("#s3_prompt").innerHTML =
+          "<strong>Prompt:</strong> Reflect on the question posed and how this driver might impact your city, work, or sector.";
+        $("#s3_continue").disabled = true;
+      }
+    }
+
+    // Step 4 is now handled by the selected-cards carousel, not single-card review
+  }
+
+  function reviewPrev(step){ state.reviewIndex -= 1; reviewLoad(step); }
+  function reviewNext(step){ state.reviewIndex += 1; reviewLoad(step); }
+
+  /* ✅ Step 4: show selected cards in the Step 1 tile layout */
+  function renderStep4SelectedCarousel(){
+    const el = $("#s4_carousel");
+    if(!el) return;
+
+    el.innerHTML = "";
+    const list = selectedDrivers();
+
+    list.forEach(d => {
+      const tile = document.createElement("div");
+      tile.className = "cardTile selected";
+      tile.style.cursor = "default";
+
+      const img = document.createElement("img");
+      img.src = d.backSrc;     // consistent with steps 2–4
+      img.alt = "Selected driver card";
+
+      tile.appendChild(img);
+      el.appendChild(tile);
     });
-    $("#s1_back").addEventListener("click", () => showOnly("s1_intro"));
-    $("#s1_continue").addEventListener("click", () => showOnly("s2_intro"));
+  }
 
-    $("#carouselPrev").addEventListener("click", () => carouselScrollBy($("#carousel"), -460));
-    $("#carouselNext").addEventListener("click", () => carouselScrollBy($("#carousel"), 460));
-
-    // Step 2
-    $("#s2_back").addEventListener("click", () => {
-      showOnly("s1_action");
-      setSelectedPill();
-      renderCarousel();
-    });
-    $("#s2_start").addEventListener("click", () => {
-      state.reviewIndex = 0;
-      showOnly("s2_action");
-      // keep existing behaviour
-      const list = selectedDrivers();
-      if(list.length) $("#s2_img").src = list[0].backSrc;
-      $("#s2_prev").disabled = true;
-      $("#s2_next").disabled = list.length <= 1;
-      $("#s2_continue").disabled = list.length !== 1;
-    });
-    $("#s2_prev").addEventListener("click", () => {});
-    $("#s2_next").addEventListener("click", () => {});
-    $("#s2_continue").addEventListener("click", () => showOnly("s3_intro"));
-
-    // Step 3 (left unchanged in this minimal patch)
-    $("#s3_back").addEventListener("click", () => showOnly("s2_intro"));
-    $("#s3_start").addEventListener("click", () => {
-      showOnly("s3_action");
-      const list = selectedDrivers();
-      if(list.length) $("#s3_img").src = list[0].backSrc;
-    });
-    $("#s3_prev").addEventListener("click", () => {});
-    $("#s3_next").addEventListener("click", () => {});
-    $("#s3_continue").addEventListener("click", () => showOnly("s4_intro"));
-
-    // Step 4
-    $("#s4_back").addEventListener("click", () => showOnly("s3_intro"));
-    $("#s4_start").addEventListener("click", () => {
-      showOnly("s4_action");
-      renderStep4SelectedCarousel();
-    });
-    $("#s4_back2").addEventListener("click", () => showOnly("s4_intro"));
-
-    // Step 4 carousel buttons
-    $("#s4_carouselPrev").addEventListener("click", () => carouselScrollBy($("#s4_carousel"), -460));
-    $("#s4_carouselNext").addEventListener("click", () => carouselScrollBy($("#s4_carousel"), 460));
-
-    // Finish
-    $("#finish").addEventListener("click", () => showOnly("done"));
-
-    // Done
-    $("#done_back").addEventListener("click", () => showOnly("s1_intro"));
-    $("#done_reset").addEventListener("click", resetAll);
-
-    // Init
+  function resetAll(){
+    state.selected = new Set();
+    state.tileFace = Object.fromEntries(DECK.map(d => [d.id, "front"]));
+    state.reviewIndex = 0;
     setSelectedPill();
     showOnly("s1_intro");
-  </script>
+  }
+
+  $("#btnReset").addEventListener("click", resetAll);
+
+  // Step 1
+  $("#s1_start").addEventListener("click", () => {
+    showOnly("s1_action");
+    setSelectedPill();
+    renderCarousel();
+  });
+  $("#s1_back").addEventListener("click", () => showOnly("s1_intro"));
+  $("#s1_continue").addEventListener("click", () => showOnly("s2_intro"));
+
+  $("#carouselPrev").addEventListener("click", () => carouselScrollBy($("#carousel"), -460));
+  $("#carouselNext").addEventListener("click", () => carouselScrollBy($("#carousel"), 460));
+
+  // Step 2
+  $("#s2_back").addEventListener("click", () => {
+    showOnly("s1_action");
+    setSelectedPill();
+    renderCarousel();
+  });
+  $("#s2_start").addEventListener("click", () => {
+    state.reviewIndex = 0;
+    showOnly("s2_action");
+    reviewLoad(2);
+  });
+  $("#s2_prev").addEventListener("click", () => reviewPrev(2));
+  $("#s2_next").addEventListener("click", () => reviewNext(2));
+  $("#s2_continue").addEventListener("click", () => showOnly("s3_intro"));
+
+  // Step 3
+  $("#s3_back").addEventListener("click", () => showOnly("s2_intro"));
+  $("#s3_start").addEventListener("click", () => {
+    state.reviewIndex = 0;
+    showOnly("s3_action");
+    reviewLoad(3);
+  });
+  $("#s3_prev").addEventListener("click", () => reviewPrev(3));
+  $("#s3_next").addEventListener("click", () => reviewNext(3));
+  $("#s3_continue").addEventListener("click", () => showOnly("s4_intro"));
+
+  // Step 4
+  $("#s4_back").addEventListener("click", () => showOnly("s3_intro"));
+  $("#s4_start").addEventListener("click", () => {
+    showOnly("s4_action");
+    renderStep4SelectedCarousel();
+  });
+
+  // If your Step 4 action panel uses these IDs (from the previous change):
+  const s4PrevBtn = $("#s4_carouselPrev");
+  const s4NextBtn = $("#s4_carouselNext");
+  if(s4PrevBtn && s4NextBtn){
+    s4PrevBtn.addEventListener("click", () => carouselScrollBy($("#s4_carousel"), -460));
+    s4NextBtn.addEventListener("click", () => carouselScrollBy($("#s4_carousel"), 460));
+  }
+
+  $("#finish").addEventListener("click", () => showOnly("done"));
+
+  // Done
+  $("#done_back").addEventListener("click", () => showOnly("s1_intro"));
+  $("#done_reset").addEventListener("click", resetAll);
+
+  // Init
+  setSelectedPill();
+  showOnly("s1_intro");
+</script>
 </body>
 </html>
