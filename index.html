@@ -77,11 +77,11 @@
       cursor:pointer;
       font-weight:700;
       font-size:13px;
-      transition:.15s border-color ease, .15s background ease, .15s box-shadow ease;
+      transition:.15s transform ease, .15s border-color ease, .15s background ease;
     }
     button:hover{
+      transform:translateY(-1px);
       border-color: rgba(66,214,209,.70);
-      box-shadow: 0 10px 26px rgba(0,0,0,.18);
     }
     button.primary{
       background: rgba(26,128,125,.28);
@@ -91,7 +91,7 @@
       background: rgba(239,239,239,.08);
       border-color: rgba(239,239,239,.28);
     }
-    button:disabled{opacity:.45; cursor:not-allowed;}
+    button:disabled{opacity:.45; cursor:not-allowed; transform:none;}
     button.mini{
       padding:7px 10px;
       border-radius:999px;
@@ -139,20 +139,20 @@
     .panel p{ margin:0; line-height:1.35; }
     .hint{ margin-top:8px; color:var(--muted); font-size:13px; }
 
-    /* Prompts for steps 2–4: match Step 1 body text styling */
-    .promptLine{
-      margin:0;
-      line-height:1.35;
-      color: var(--text);
-      font-size: 16px;
-    }
-
     .panelBody{
       flex:1 1 auto;
       min-height:0;
       display:flex;
       flex-direction:column;
-      gap:10px;
+      gap:8px; /* was 10px */
+    }
+
+    /* Prompt line should sit like Step 1 subtext (tight under H2) */
+    .promptLine{
+      margin: -2px 0 0; /* lifts it slightly to match Step 1 */
+      line-height: 1.35;
+      color: var(--text);
+      font-size: 16px;
     }
 
     .bottomBar{
@@ -191,7 +191,6 @@
       gap:10px;
       align-items:center;
       flex-wrap:wrap;
-      min-height: 22px; /* keeps layout stable even when left text is empty */
     }
     .countText{ color:var(--muted); font-size:13px; }
 
@@ -229,7 +228,9 @@
     @media (max-width: 980px){ .cardTile{ flex-basis: 360px; } }
     @media (max-width: 760px){ .cardTile{ flex-basis: 300px; } }
 
+    /* no vertical jump on hover */
     .cardTile:hover{
+      transform:none;
       border-color: rgba(66,214,209,.65);
       box-shadow: 0 10px 26px rgba(0,0,0,.34);
     }
@@ -385,7 +386,7 @@
             <button id="s2_back">Back</button>
           </div>
           <div class="right">
-            <button class="primary" id="s2_start">Start</button>
+            <button class="primary" id="s2_start">Start step 2</button>
           </div>
         </div>
       </div>
@@ -395,18 +396,17 @@
         <div class="panelBody">
           <div>
             <h2>Step 2 — Explore Each Driver</h2>
+            <p class="promptLine">
+              <strong>Prompt:</strong> Consider the forces at play. What’s shifting, accelerating, or becoming unstable?
+            </p>
           </div>
-
-          <p class="promptLine">
-            <strong>Prompt:</strong> Consider the forces at play. What’s shifting, accelerating, or becoming unstable?
-          </p>
 
           <div class="review">
             <div class="reviewCard">
               <img id="s2_img" alt="Selected card" />
             </div>
           </div>
-        </div> <!-- ✅ important: closes panelBody so Step 3 can load -->
+        </div>
 
         <div class="bottomBar">
           <div class="left">
@@ -433,7 +433,7 @@
             <button id="s3_back">Back</button>
           </div>
           <div class="right">
-            <button class="primary" id="s3_start">Start</button>
+            <button class="primary" id="s3_start">Start step 3</button>
           </div>
         </div>
       </div>
@@ -443,9 +443,8 @@
         <div class="panelBody">
           <div>
             <h2>Step 3 — Reflect + Explore Intersections</h2>
+            <p class="promptLine" id="s3_prompt"></p>
           </div>
-
-          <p class="promptLine" id="s3_prompt"></p>
 
           <div class="review">
             <div class="reviewCard">
@@ -479,21 +478,20 @@
             <button id="s4_back">Back</button>
           </div>
           <div class="right">
-            <button class="primary" id="s4_start">Start</button>
+            <button class="primary" id="s4_start">Start step 4</button>
           </div>
         </div>
       </div>
 
-      <!-- STEP 4: ACTION (selected cards carousel + flip) -->
+      <!-- STEP 4: Action (selected cards in Step 1 layout, with flip) -->
       <div class="panel hidden" id="s4_action">
         <div class="panelBody">
           <div>
             <h2>Step 4 — Identify Leverage Points</h2>
+            <p class="promptLine">
+              Review your chosen 2–3 drivers together.
+            </p>
           </div>
-
-          <p class="promptLine">
-            Review your chosen 2–3 drivers together.
-          </p>
 
           <div class="carouselWrap">
             <div class="carouselControls">
@@ -554,7 +552,7 @@
 
     const state = {
       selected: new Set(),
-      tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 flip state
+      tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
       reviewIndex: 0,
       step4Face: Object.fromEntries(DECK.map(d => [d.id, "back"]))  // Step 4 flip state
     };
@@ -740,8 +738,8 @@
     function resetAll(){
       state.selected = new Set();
       state.tileFace = Object.fromEntries(DECK.map(d => [d.id, "front"]));
-      state.step4Face = Object.fromEntries(DECK.map(d => [d.id, "back"]));
       state.reviewIndex = 0;
+      state.step4Face = Object.fromEntries(DECK.map(d => [d.id, "back"]));
       setSelectedPill();
       showOnly("s1_intro");
     }
@@ -794,12 +792,8 @@
       renderStep4SelectedCarousel();
     });
 
-    const s4PrevBtn = $("#s4_carouselPrev");
-    const s4NextBtn = $("#s4_carouselNext");
-    if(s4PrevBtn && s4NextBtn){
-      s4PrevBtn.addEventListener("click", () => carouselScrollBy($("#s4_carousel"), -460));
-      s4NextBtn.addEventListener("click", () => carouselScrollBy($("#s4_carousel"), 460));
-    }
+    $("#s4_carouselPrev").addEventListener("click", () => carouselScrollBy($("#s4_carousel"), -460));
+    $("#s4_carouselNext").addEventListener("click", () => carouselScrollBy($("#s4_carousel"), 460));
 
     $("#finish").addEventListener("click", () => showOnly("done"));
 
@@ -808,8 +802,6 @@
     $("#done_reset").addEventListener("click", resetAll);
 
     // Init
-    $("#s3_prompt").innerHTML =
-      "<strong>Prompt:</strong> Reflect on the question posed and how this driver might impact your city, work, or sector.";
     setSelectedPill();
     showOnly("s1_intro");
   </script>
