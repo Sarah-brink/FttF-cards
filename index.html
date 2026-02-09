@@ -221,7 +221,11 @@
     @media (max-width: 980px){ .cardTile{ flex-basis: 360px; } }
     @media (max-width: 760px){ .cardTile{ flex-basis: 300px; } }
 
-    .cardTile:hover{ transform: translateY(-2px); border-color: rgba(66,214,209,.65); }
+    .cardTile:hover{
+      transform: none;
+      border-color: rgba(66,214,209,.65);
+      box-shadow: 0 10px 26px rgba(0,0,0,.34);
+    }
     .cardTile.selected{
       border-color: rgba(66,214,209,.95);
       outline: 2px solid rgba(66,214,209,.22);
@@ -337,7 +341,7 @@
 
           <div class="carouselWrap">
             <div class="carouselControls">
-              <div class="countText">Browse the deck, flip cards if useful, then tick 2–3 cards.</div>
+              <div class="countText"></div>
               <div class="right">
                 <button id="carouselPrev" type="button">◀</button>
                 <button id="carouselNext" type="button">▶</button>
