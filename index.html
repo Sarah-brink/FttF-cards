@@ -541,6 +541,7 @@
     selected: new Set(),
     tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
     reviewIndex: 0
+    state.step4Face = Object.fromEntries(DECK.map(d => [d.id, "back"]));
   };
 
   const $ = (s) => document.querySelector(s);
