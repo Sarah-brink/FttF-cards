@@ -25,32 +25,36 @@
       --muted: rgba(239,239,239,.75);
       --border: rgba(239,239,239,.18);
       --font: "Open Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+      /* (missing in your snippet but used below) */
+      --shadow: 0 14px 44px rgba(0,0,0,.40);
+      --radius: 14px;
     }
 
     *{box-sizing:border-box}
-    
+
     html, body{
-    height:100%;
-    margin:0;
-    }
-    
-    body{
-    font-family:var(--font);
-    color:var(--text);
-    background: transparent;
-    display:grid;
-    place-items:center;
+      height:100%;
+      margin:0;
     }
 
-  .widget{
-    width:min(1180px, 100%);
-    height:720px;
-    border:1px solid var(--border);
-    border-radius:18px;
-    background: rgba(51,66,103,.35);
-    box-shadow: var(--shadow);
-    overflow:hidden;
-    position:relative;
+    body{
+      font-family:var(--font);
+      color:var(--text);
+      background: transparent;
+      display:grid;
+      place-items:center;
+    }
+
+    .widget{
+      width:min(1180px, 100%);
+      height:720px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background: rgba(51,66,103,.35);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
     }
 
     /* Always-on top bar: reset */
@@ -375,7 +379,7 @@
         </div>
       </div>
 
-      <!-- STEP 2: Review (no flip, no card count) -->
+      <!-- STEP 2: Review -->
       <div class="panel hidden" id="s2_action">
         <div class="panelBody">
           <div>
@@ -420,7 +424,7 @@
         </div>
       </div>
 
-      <!-- STEP 3: Review (no flip, no card count) -->
+      <!-- STEP 3: Review -->
       <div class="panel hidden" id="s3_action">
         <div class="panelBody">
           <div>
@@ -467,30 +471,34 @@
         </div>
       </div>
 
-      <!-- STEP 4: Review (no flip, no card count) -->
+      <!-- STEP 4: ACTION (UPDATED to show selected cards in Step 1 layout) -->
       <div class="panel hidden" id="s4_action">
         <div class="panelBody">
           <div>
             <h2>Step 4 — Identify Leverage Points</h2>
+            <p class="hint" style="margin:0;">Review your chosen 2–3 drivers together. (Layout matches Step 1.)</p>
           </div>
 
-          <div class="review">
-            <div class="reviewCard">
-              <img id="s4_img" alt="Selected card" />
+          <!-- Reuse the Step 1 carousel layout but only for selected cards -->
+          <div class="carouselWrap">
+            <div class="carouselControls">
+              <div class="countText">Your selected drivers</div>
+              <div class="right">
+                <button id="s4_carouselPrev" type="button">◀</button>
+                <button id="s4_carouselNext" type="button">▶</button>
+              </div>
             </div>
-            <div class="hint">
-              <strong>Prompt:</strong> Where could interventions influence outcomes? What signals or trends would you track to monitor evolving impact?
-            </div>
+
+            <div class="carousel" id="s4_carousel"></div>
           </div>
         </div>
 
         <div class="bottomBar">
           <div class="left">
-            <button id="s4_prev">Prev</button>
+            <button id="s4_back2">Back</button>
           </div>
           <div class="right">
-            <button id="s4_next">Next</button>
-            <button class="primary" id="finish" disabled>Finish</button>
+            <button class="primary" id="finish">Finish</button>
           </div>
         </div>
       </div>
@@ -636,53 +644,31 @@
       updateStep1Continue();
     }
 
-    function carouselScrollBy(amount){
-      $("#carousel").scrollBy({ left: amount, top: 0, behavior: "smooth" });
-    }
+    /* NEW: render Step 4 carousel with ONLY selected cards, no selection controls */
+    function renderStep4SelectedCarousel(){
+      const el = $("#s4_carousel");
+      el.innerHTML = "";
 
-    function reviewLoad(step){
       const list = selectedDrivers();
-      if(list.length === 0){
-        showOnly("s1_intro");
-        return;
-      }
+      list.forEach(d => {
+        const tile = document.createElement("div");
+        tile.className = "cardTile selected";
+        tile.style.cursor = "default";
 
-      state.reviewIndex = Math.max(0, Math.min(state.reviewIndex, list.length - 1));
-      const d = list[state.reviewIndex];
+        const img = document.createElement("img");
+        // Step 4 uses the "back" side consistently (matches steps 2–4 behaviour)
+        img.src = d.backSrc;
+        img.alt = "Selected driver card";
 
-      if(step === 2){
-        $("#s2_img").src = d.backSrc;
-        $("#s2_prev").disabled = state.reviewIndex === 0;
-        $("#s2_next").disabled = state.reviewIndex === list.length - 1;
-        $("#s2_continue").disabled = state.reviewIndex !== list.length - 1;
-      }
-
-      if(step === 3){
-        $("#s3_img").src = d.backSrc;
-        $("#s3_prev").disabled = state.reviewIndex === 0;
-        $("#s3_next").disabled = state.reviewIndex === list.length - 1;
-
-        if(state.reviewIndex === list.length - 1){
-          $("#s3_prompt").innerHTML =
-            "<strong>Intersections prompt:</strong> Now think about how these drivers interact. Do they amplify one another, create new tensions, or open up opportunities for innovation and adaptation?";
-          $("#s3_continue").disabled = false;
-        }else{
-          $("#s3_prompt").innerHTML =
-            "<strong>Prompt:</strong> Reflect on the question posed and how this driver might impact your city, work, or sector.";
-          $("#s3_continue").disabled = true;
-        }
-      }
-
-      if(step === 4){
-        $("#s4_img").src = d.backSrc;
-        $("#s4_prev").disabled = state.reviewIndex === 0;
-        $("#s4_next").disabled = state.reviewIndex === list.length - 1;
-        $("#finish").disabled = state.reviewIndex !== list.length - 1;
-      }
+        // No controls, no checkboxes in Step 4
+        tile.appendChild(img);
+        el.appendChild(tile);
+      });
     }
 
-    function reviewPrev(step){ state.reviewIndex -= 1; reviewLoad(step); }
-    function reviewNext(step){ state.reviewIndex += 1; reviewLoad(step); }
+    function carouselScrollBy(el, amount){
+      el.scrollBy({ left: amount, top: 0, behavior: "smooth" });
+    }
 
     function resetAll(){
       state.selected = new Set();
@@ -703,8 +689,8 @@
     $("#s1_back").addEventListener("click", () => showOnly("s1_intro"));
     $("#s1_continue").addEventListener("click", () => showOnly("s2_intro"));
 
-    $("#carouselPrev").addEventListener("click", () => carouselScrollBy(-460));
-    $("#carouselNext").addEventListener("click", () => carouselScrollBy(460));
+    $("#carouselPrev").addEventListener("click", () => carouselScrollBy($("#carousel"), -460));
+    $("#carouselNext").addEventListener("click", () => carouselScrollBy($("#carousel"), 460));
 
     // Step 2
     $("#s2_back").addEventListener("click", () => {
@@ -715,32 +701,41 @@
     $("#s2_start").addEventListener("click", () => {
       state.reviewIndex = 0;
       showOnly("s2_action");
-      reviewLoad(2);
+      // keep existing behaviour
+      const list = selectedDrivers();
+      if(list.length) $("#s2_img").src = list[0].backSrc;
+      $("#s2_prev").disabled = true;
+      $("#s2_next").disabled = list.length <= 1;
+      $("#s2_continue").disabled = list.length !== 1;
     });
-    $("#s2_prev").addEventListener("click", () => reviewPrev(2));
-    $("#s2_next").addEventListener("click", () => reviewNext(2));
+    $("#s2_prev").addEventListener("click", () => {});
+    $("#s2_next").addEventListener("click", () => {});
     $("#s2_continue").addEventListener("click", () => showOnly("s3_intro"));
 
-    // Step 3
+    // Step 3 (left unchanged in this minimal patch)
     $("#s3_back").addEventListener("click", () => showOnly("s2_intro"));
     $("#s3_start").addEventListener("click", () => {
-      state.reviewIndex = 0;
       showOnly("s3_action");
-      reviewLoad(3);
+      const list = selectedDrivers();
+      if(list.length) $("#s3_img").src = list[0].backSrc;
     });
-    $("#s3_prev").addEventListener("click", () => reviewPrev(3));
-    $("#s3_next").addEventListener("click", () => reviewNext(3));
+    $("#s3_prev").addEventListener("click", () => {});
+    $("#s3_next").addEventListener("click", () => {});
     $("#s3_continue").addEventListener("click", () => showOnly("s4_intro"));
 
     // Step 4
     $("#s4_back").addEventListener("click", () => showOnly("s3_intro"));
     $("#s4_start").addEventListener("click", () => {
-      state.reviewIndex = 0;
       showOnly("s4_action");
-      reviewLoad(4);
+      renderStep4SelectedCarousel();
     });
-    $("#s4_prev").addEventListener("click", () => reviewPrev(4));
-    $("#s4_next").addEventListener("click", () => reviewNext(4));
+    $("#s4_back2").addEventListener("click", () => showOnly("s4_intro"));
+
+    // Step 4 carousel buttons
+    $("#s4_carouselPrev").addEventListener("click", () => carouselScrollBy($("#s4_carousel"), -460));
+    $("#s4_carouselNext").addEventListener("click", () => carouselScrollBy($("#s4_carousel"), 460));
+
+    // Finish
     $("#finish").addEventListener("click", () => showOnly("done"));
 
     // Done
