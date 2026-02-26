@@ -144,12 +144,11 @@
       min-height:0;
       display:flex;
       flex-direction:column;
-      gap:8px; /* was 10px */
+      gap:8px;
     }
 
-    /* Prompt line should sit like Step 1 subtext (tight under H2) */
     .promptLine{
-      margin: -2px 0 0; /* lifts it slightly to match Step 1 */
+      margin: -2px 0 0;
       line-height: 1.35;
       color: var(--text);
       font-size: 16px;
@@ -172,7 +171,7 @@
       flex-wrap:wrap;
     }
 
-    /* Stage 1 carousel */
+    /* Carousel */
     .carouselWrap{
       border:1px solid var(--border);
       border-radius:16px;
@@ -228,7 +227,6 @@
     @media (max-width: 980px){ .cardTile{ flex-basis: 360px; } }
     @media (max-width: 760px){ .cardTile{ flex-basis: 300px; } }
 
-    /* no vertical jump on hover */
     .cardTile:hover{
       transform:none;
       border-color: rgba(66,214,209,.65);
@@ -319,32 +317,16 @@
     </div>
 
     <div class="content">
-      <!-- STEP 1: Intro -->
-      <div class="panel" id="s1_intro">
+      <!-- STEP 1: Action (now the first screen) -->
+      <div class="panel" id="s1_action">
         <div class="panelBody">
           <div>
             <h2>Step 1 — Select the Drivers</h2>
             <p>
               Read through the whole deck then choose <strong>2–3</strong> cards that stand out to you or are most relevant to your context.
               These could relate to current challenges you're facing or future opportunities you’re exploring.
+              Scroll sideways to browse the deck
             </p>
-          </div>
-        </div>
-
-        <div class="bottomBar">
-          <div class="left"></div>
-          <div class="right">
-            <button class="primary" id="s1_start">Start selecting</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 1: Action -->
-      <div class="panel hidden" id="s1_action">
-        <div class="panelBody">
-          <div>
-            <h2>Step 1 — Select the Drivers</h2>
-            <p>Select <strong>2–3</strong> cards. Scroll sideways to browse the deck.</p>
           </div>
 
           <div class="carouselWrap">
@@ -361,10 +343,7 @@
         </div>
 
         <div class="bottomBar">
-          <div class="left">
-            <button id="s1_back">Back</button>
-          </div>
-
+          <div class="left"></div>
           <div class="rightGroup">
             <div class="pill show" id="pillSelected">Selected: 0 (choose 2–3)</div>
             <button class="primary" id="s1_continue" disabled>Continue</button>
@@ -552,7 +531,7 @@
 
     const state = {
       selected: new Set(),
-      tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 only
+      tileFace: Object.fromEntries(DECK.map(d => [d.id, "front"])), // Step 1 flip state
       reviewIndex: 0,
       step4Face: Object.fromEntries(DECK.map(d => [d.id, "back"]))  // Step 4 flip state
     };
@@ -568,7 +547,7 @@
     }
 
     function showOnly(panelId){
-      const ids = ["s1_intro","s1_action","s2_intro","s2_action","s3_intro","s3_action","s4_intro","s4_action","done"];
+      const ids = ["s1_action","s2_intro","s2_action","s3_intro","s3_action","s4_intro","s4_action","done"];
       ids.forEach(id => (id === panelId ? show(id) : hide(id)));
     }
 
@@ -665,7 +644,7 @@
     function reviewLoad(step){
       const list = selectedDrivers();
       if(list.length === 0){
-        showOnly("s1_intro");
+        showOnly("s1_action");
         return;
       }
 
@@ -741,29 +720,24 @@
       state.reviewIndex = 0;
       state.step4Face = Object.fromEntries(DECK.map(d => [d.id, "back"]));
       setSelectedPill();
-      showOnly("s1_intro");
+      showOnly("s1_action");
+      renderCarousel();
     }
 
     $("#btnReset").addEventListener("click", resetAll);
 
-    // Step 1
-    $("#s1_start").addEventListener("click", () => {
-      showOnly("s1_action");
-      setSelectedPill();
-      renderCarousel();
-    });
-    $("#s1_back").addEventListener("click", () => showOnly("s1_intro"));
-    $("#s1_continue").addEventListener("click", () => showOnly("s2_intro"));
+    // First screen (Step 1 deck view)
+    renderCarousel();
+    updateStep1Continue();
+    showOnly("s1_action");
 
     $("#carouselPrev").addEventListener("click", () => carouselScrollBy($("#carousel"), -460));
     $("#carouselNext").addEventListener("click", () => carouselScrollBy($("#carousel"), 460));
 
+    $("#s1_continue").addEventListener("click", () => showOnly("s2_intro"));
+
     // Step 2
-    $("#s2_back").addEventListener("click", () => {
-      showOnly("s1_action");
-      setSelectedPill();
-      renderCarousel();
-    });
+    $("#s2_back").addEventListener("click", () => showOnly("s1_action"));
     $("#s2_start").addEventListener("click", () => {
       state.reviewIndex = 0;
       showOnly("s2_action");
@@ -798,12 +772,8 @@
     $("#finish").addEventListener("click", () => showOnly("done"));
 
     // Done
-    $("#done_back").addEventListener("click", () => showOnly("s1_intro"));
+    $("#done_back").addEventListener("click", () => showOnly("s1_action"));
     $("#done_reset").addEventListener("click", resetAll);
-
-    // Init
-    setSelectedPill();
-    showOnly("s1_intro");
   </script>
 </body>
 </html>
